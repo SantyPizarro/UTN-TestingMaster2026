@@ -1,6 +1,6 @@
 # UTN-TestingMaster2026
 
-Este repositorio contiene las actividades, proyectos prácticos y pruebas realizadas en el marco del curso **Testing Master** de la **UTN (Universidad Tecnológica Nacional)**.
+Este repositorio contiene las actividades, proyectos prácticos y pruebas realizadas en el marco del curso **Testing Master** de la **UTN y Fundación Empujar**.
 
 ---
 
