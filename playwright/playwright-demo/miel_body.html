@@ -1,0 +1,990 @@
+<body class="w3-light-grey">
+
+<header class="w3-top">
+    <div class="w3-container">
+        <div class="w3-left">
+            <img class="logo-header w3-margin-right" src="https://miel.unlam.edu.ar/vista/imagenes/logos/unlam-2025/logo-unlam-blanco-40.png" alt="logo unlam">
+            <img class="logo-header" src="https://miel.unlam.edu.ar/vista/imagenes/logos/miel/logo-miel-light-40.png" alt="logo miel">
+        </div>
+        <div class="w3-right">
+            <div id="btnInstalar" class="btnHeader" style="display: none">
+                <i class="material-icons w3-hide-small tippy" data-tippy-content="Instalar app" aria-hidden="true" tabindex="0">install_desktop</i>
+                <i class="material-icons w3-hide-medium w3-hide-large tippy" data-tippy-content="Instalar app" aria-hidden="true" tabindex="0">install_mobile</i>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section id="login">
+    <div class="home-container">
+        <div class="titles">
+            <h1 class="title">Materias Interactivas<br>en Línea</h1>
+            <h2 class="subtitle">Plataforma de enseñanza y aprendizaje de la Universidad Nacional de<br>La Matanza</h2>
+        </div>
+        <div>
+            <div class="login-container">
+                <div id="card-content-login">
+    <h2 class="subtitle w3-center">
+        <span id="saludo">¡Buenas tardes!</span>
+    </h2>
+    <form id="formLogin" action="https://miel.unlam.edu.ar/principal/event/login/" method="post" novalidate="novalidate">
+        <div class="w3-margin-bottom">
+            <label for="usuario">Usuario:</label>
+            <input type="text" id="usuario" name="usuario" maxlength="30" tabindex="1">
+        </div>
+        <div class="w3-margin-bottom">
+            <label for="clave" class="w3-left">Contraseña:</label>
+            <a href="javascript:void(0)" id="btnOlvideClave" class="w3-right" tabindex="3">
+                Olvidé mi contraseña
+            </a>
+            <input type="password" id="clave" name="clave" maxlength="30" tabindex="2">
+            <div id="mensajeErrorLogin" class="w3-red w3-padding-4 w3-container w3-round w3-hide"></div>
+        </div>
+        <div>
+            <label class="login-checkbox">Mantener mi sesión activa.
+                <input type="checkbox" id="recordar" name="recordar">
+                <span class="login-checkbox-checkmark"></span>
+            </label>
+            <span class="material-icons w3-large w3-cell-middle tippy" data-tippy-content="Le sugerimos no activar esta opción en dispositivos de uso compartido o en computadoras de la Universidad." tabindex="0">help_outline</span>
+        </div>
+
+        <div id="mensajePasswordOk" class="w3-text-green w3-hide"></div>
+
+        <div class="w3-margin-top">
+            <button type="button" id="btnLogin" class="primary-button w3-hover-shadow">
+                Ingresar
+            </button>
+
+            <hr>
+                            <a href="https://mielingreso.unlam.edu.ar/" class="secondary-button w3-hover-shadow">
+                    Ir a MIeL Ingresantes<i class="material-icons">chevron_right</i>
+                </a>
+                    </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+    $(function() {
+        $('#saludo').text(obtenerSaludo());
+
+        // Autofoco en el campo usuario de login
+        $('#usuario').focus();
+
+        // Login al presionar ENTER sobre el formulario
+        $('[name=usuario], [name=clave]').keypress(function (e) {
+            if (e.which === 13) {
+                $('#btnLogin').click();
+                e.preventDefault();
+            }
+        });
+
+        // Validacion de campos
+        $('#formLogin').validate({
+            rules: {
+                usuario: { required: true },
+                clave: { required: true },
+            },
+            errorPlacement: function(error, element) {
+                return false;
+            }
+        });
+
+        // Boton de olvide mi contrasena
+        $('#btnOlvideClave').click(function() {
+            $('#mensajeErrorEmailNoVerificado, #mensajeErrorRecuperarClave').addClass('w3-hide');
+            $('#card-content-login').hide();
+
+                        $('#card-content-aviso-recuperar-clave').fadeIn();
+            $('#usuarioRecuperar').focus();
+                    });
+
+        // Boton de login (valida usuario y si el email fue verificado)
+        $('#btnLogin').click(function() {
+            $('#mensajeErrorLogin').addClass('w3-hide');
+
+            if (!$(this).hasClass("w3-disabled")) {
+                if ($('#formLogin').valid()) {
+                    deshabilitarBotones();
+
+                    $.ajax({
+                        type: "POST",
+                        url: $('#formLogin').attr("action"),
+                        data: $('#formLogin').serialize(),
+                        dataType: "json",
+                        cache: false,
+                        success: function (data) {
+                            switch (data.estado) {
+                                case 0:
+                                    validarSuscripcionNotificacion($("#recordar").is(':checked'));
+                                    window.location = 'https://miel.unlam.edu.ar/principal/interno/';
+                                    break;
+                                case 1:
+                                case 2:
+                                    habilitarBotones();
+                                    $('#mensajeErrorLogin')
+                                        .html('Usuario o contrase&ntilde;a incorrectos.')
+                                        .removeClass('w3-hide');
+                                    break;
+                                case 3:
+                                    habilitarBotones();
+                                    $('#mensajeErrorLogin')
+                                        .html('Su usuario se encuentra bloqueado.')
+                                        .removeClass('w3-hide');
+                                    break;
+                            }
+                        },
+                        error: function (error) {
+                            habilitarBotones();
+                            $('#mensajeErrorLogin')
+                                .html('Ocurri&oacute; un error, intente nuevamente.')
+                                .removeClass('w3-hide');
+                        }
+                    });
+                }
+            }
+        });
+
+    });
+
+    function obtenerSaludo() {
+      const fecha = new Date();
+      const hora = fecha.getHours();
+      if (hora >= 5 && hora < 12) {
+        return '¡Buenos días!';
+      }
+      if (hora >= 12 && hora < 20) {
+        return '¡Buenas tardes!';
+      }
+      return'¡Buenas noches!';
+    }
+</script>
+<div id="card-content-aviso-recuperar-clave" style="display: none;">
+    <h2 class="subtitle w3-center">Olvidé mi contraseña</h2>
+    <p>
+        Si usted es ALUMNO/A regular de la Universidad, deberá recuperar su contraseña a través del sistema de
+        <a href="https://alumno2.unlam.edu.ar/" target="_blank"><strong>Intraconsulta</strong></a>.
+    </p>
+    <p>
+        Si usted es personal DOCENTE, NO DOCENTE o ALUMNO/A NO REGULAR (de ingreso o extensión), podrá recuperar
+        su contraseña por este medio si tiene una cuenta de email asociada a su perfil de MIeL.
+    </p>
+    <div class="w3-row-padding">
+        <div class="w3-half">
+            <button type="button" class="btnVolver secondary-button">Volver</button>
+        </div>
+        <div class="w3-half">
+            <button type="button" class="btnContinuar primary-button">Continuar</button>
+        </div>
+    </div>
+</div>
+
+<div id="card-content-recuperar-clave-usuario" style="display: none;">
+    <form id="formRecuperarClave" action="https://miel.unlam.edu.ar/principal/event/buscarUsuarioRecuperarClaveAjax/" method="post" novalidate="novalidate">
+        <h2 class="subtitle w3-center">Olvidé mi contraseña</h2>
+        <p>
+            Sólo para personal docente, no docente y alumnos/as no regulares.
+        </p>
+        <div class="w3-margin-bottom">
+            <label for="usuarioRecuperar">Ingrese su DNI o usuario:</label>
+            <input type="text" id="usuarioRecuperar" name="usuarioRecuperar" maxlength="30">
+            <div id="mensajeErrorRecuperarClave" class="w3-red w3-padding-4 w3-container w3-round w3-hide"></div>
+        </div>
+        <div class="w3-row-padding">
+            <div class="w3-half">
+                <button type="button" class="btnVolver secondary-button">Volver</button>
+            </div>
+            <div class="w3-half">
+                <button type="button" class="btnContinuar primary-button">Continuar</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="card-content-recuperar-clave-email" style="display: none;">
+    <form id="formRecuperarClaveEmail" action="https://miel.unlam.edu.ar/principal/event/enviarEmailRecuperarClaveAjax/" method="post" novalidate="novalidate">
+        <h2 class="subtitle w3-center">Olvidé mi contraseña</h2>
+        <p>
+            Le enviaremos un enlace a la cuenta <strong id="emailOculto"></strong> para que pueda restablecer su contraseña.
+            Ingrese su email completo y haga click en "Continuar."
+        </p>
+        <div class="w3-margin-bottom">
+            <input type="hidden" id="idUsuarioRecuperar" name="idUsuarioRecuperar" value="">
+            <label for="emailRecuperar">Email:</label>
+            <input type="text" id="emailRecuperar" name="emailRecuperar" class="w3-input" maxlength="80" autocomplete="off">
+            <div id="mensajeErrorRecuperarClaveEmail" class="w3-red w3-padding-4 w3-container w3-round w3-hide"></div>
+        </div>
+        <div class="w3-row-padding">
+            <div class="w3-half">
+                <button type="button" class="btnVolver secondary-button">Volver</button>
+            </div>
+            <div class="w3-half">
+                <button type="button" class="btnContinuar primary-button">Continuar</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="card-content-recuperar-clave-mensaje" style="display: none;">
+    <h2 class="subtitle w3-center">Revise su correo</h2>
+    <p>Le enviamos por email un enlace para reestablecer su contraseña de MIeL. El enlace tendrá una validez de 2 horas.</p>
+    <p>Si aún no recibió el correo, aguarde unos segundos, revise su bandeja de Spam o vuelva a intentarlo.</p>
+    <div>
+        <button type="button" class="btnVolver secondary-button">Salir</button>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $(function() {
+
+        $('#card-content-aviso-recuperar-clave')
+            .find('.btnVolver').click(function() {
+                $('#card-content-aviso-recuperar-clave').hide();
+                $('#card-content-login').fadeIn();
+            });
+
+        $('#card-content-aviso-recuperar-clave')
+            .find('.btnContinuar').click(function() {
+                $('#card-content-aviso-recuperar-clave').hide();
+                $('#card-content-recuperar-clave-usuario').fadeIn();
+                $('#usuarioRecuperar').focus();
+            });
+
+        $('#formRecuperarClave').submit(function(e) {
+            e.preventDefault();
+        })
+            .validate({
+                rules: {
+                    usuarioRecuperar: { required: true }
+                },
+                errorPlacement: function(error, element) {
+                    error.insertAfter(element.next("span"));
+                }
+            });
+
+        $('#formRecuperarClaveEmail').submit(function(e) {
+            e.preventDefault();
+        })
+            .validate({
+                rules: {
+                    emailRecuperar: { required: true, email: true }
+                },
+                errorPlacement: function(error, element) {
+                    error.insertAfter(element.next("span"));
+                }
+            });
+
+        $('#card-content-recuperar-clave-usuario')
+            .find('.btnVolver').click(function() {
+                $('#usuarioRecuperar').val('');
+                $('#card-content-recuperar-clave-usuario').hide();
+                $('#card-content-login').fadeIn();
+            });
+
+        $('#card-content-recuperar-clave-usuario')
+            .find('.btnContinuar').click(function() {
+                var btn = $(this);
+
+                if (!$(this).hasClass("w3-disabled")) {
+                    $('#mensajeErrorRecuperarClave').addClass('w3-hide');
+
+                    if ($('#formRecuperarClave').valid()) {
+                        deshabilitarBotones();
+                        btn.html('Buscando...');
+
+                        $.ajax({
+                            type: "POST",
+                            url: $('#formRecuperarClave').attr("action"),
+                            data: $('#formRecuperarClave').serialize(),
+                            dataType: "json",
+                            cache: false,
+                            success: function (data) {
+                                console.log(data);
+                                switch (data.estado) {
+                                    case 0:
+                                        $('#card-content-recuperar-clave-usuario').hide();
+                                        $('#card-content-recuperar-clave-email').fadeIn();
+                                        $('#emailOculto').html(data.email);
+                                        $('#idUsuarioRecuperar').val(data.idUsuario);
+                                        $('#emailRecuperar').focus();
+                                        break;
+                                    case 1:
+                                        $('#mensajeErrorRecuperarClave')
+                                            .html('El usuario ingresado no existe.')
+                                            .removeClass('w3-hide');
+                                        break;
+                                    case 2:
+                                        $('#mensajeErrorRecuperarClave')
+                                            .html('No posee una cuenta de email asociada. Comun&iacute;quese con nosotros.')
+                                            .removeClass('w3-hide');
+                                        break;
+                                    case 3:
+                                        $('#mensajeErrorRecuperarClave')
+                                            .html('Usted es alumno regular, recupere su contrase&ntilde;a desde Intraconsulta.')
+                                            .removeClass('w3-hide');
+                                        break;
+                                }
+                            },
+                            error: function (error) {
+                                $('#mensajeErrorRecuperarClave')
+                                    .html('Ocurri&oacute; un error al buscar el usuario.')
+                                    .removeClass('w3-hide');
+                            },
+                            complete: function () {
+                                habilitarBotones();
+                                btn.html('Continuar');
+                            }
+                        });
+                    }
+                }
+            });
+
+        $('#card-content-recuperar-clave-email')
+            .find('.btnVolver').click(function() {
+                $('#usuarioRecuperar, #emailRecuperar').val('');
+                $('#card-content-recuperar-clave-email').hide();
+                $('#card-content-login').fadeIn();
+            });
+
+        $('#card-content-recuperar-clave-email')
+            .find('.btnContinuar').click(function() {
+                var btn = $(this);
+
+                if (!$(this).hasClass("w3-disabled")) {
+                    $('#mensajeErrorRecuperarClaveEmail').addClass('w3-hide');
+                    if ($('#formRecuperarClaveEmail').valid()) {
+                        deshabilitarBotones();
+                        btn.html('Enviando...');
+
+                        $.ajax({
+                            type: "POST",
+                            url: $('#formRecuperarClaveEmail').attr("action"),
+                            data: $('#formRecuperarClaveEmail').serialize(),
+                            dataType: "json",
+                            cache: false,
+                            success: function (data) {
+                                console.log(data);
+                                switch (data.estado) {
+                                    case 0:
+                                        $('#card-content-recuperar-clave-email').hide();
+                                        $('#card-content-recuperar-clave-mensaje').fadeIn();
+                                        break;
+                                    case 1:
+                                        $('#mensajeErrorRecuperarClaveEmail')
+                                            .html('La cuenta de email ingresada no es correcta.')
+                                            .removeClass('w3-hide');
+                                        break;
+                                    case 2:
+                                        $('#mensajeErrorRecuperarClaveEmail')
+                                            .html('No se pudo enviar el correo a la cuenta ingresada.')
+                                            .removeClass('w3-hide');
+                                        break;
+                                }
+                            },
+                            error: function (error) {
+                                console.log(error);
+                                $('#mensajeErrorRecuperarClaveEmail')
+                                    .html('Ocurri&oacute; un error al enviar el correo.')
+                                    .removeClass('w3-hide');
+                            },
+                            complete: function () {
+                                habilitarBotones();
+                                btn.html('Continuar');
+                            }
+                        });
+                    }
+                }
+            });
+
+        $('#card-content-recuperar-clave-mensaje')
+            .find('.btnVolver').click(function() {
+                $('#usuarioRecuperar, #emailRecuperar, #usuario, #clave').val('');
+                $('#card-content-recuperar-clave-mensaje').hide();
+                $('#card-content-login').fadeIn();
+            });
+
+    });
+</script>
+<div id="card-content-cambiar-clave" style="display: none;">
+    <form id="formCambiarClave" action="https://miel.unlam.edu.ar/principal/event/cambiarClaveAjax/" method="post" novalidate="novalidate">
+        <input type="hidden" id="codigoCambiarClave" name="codigoCambiarClave" value="">
+
+        <h2 class="subtitle w3-center">Nueva contraseña</h2>
+        <div class="w3-margin-bottom w3-margin-top">
+            <label for="claveNueva">Ingrese su nueva contraseña:</label>
+            <input type="password" id="claveNueva" name="claveNueva" maxlength="30" autocomplete="off">
+        </div>
+        <div class="w3-margin-bottom">
+            <label for="claveNueva2">Repita la contraseña:</label>
+            <input type="password" id="claveNueva2" name="claveNueva2" maxlength="30" autocomplete="off">
+        </div>
+        <div class="w3-row-padding">
+            <div class="w3-half">
+                <a href="https://miel.unlam.edu.ar/principal/home/" class="secondary-button">Cancelar</a>
+            </div>
+            <div class="w3-half">
+                <a href="javascript:void(0)" class="btnContinuar primary-button">Confirmar</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+    $(function() {
+
+        
+        $('#formCambiarClave').submit(function(e) {
+            e.preventDefault();
+        })
+            .validate({
+                rules: {
+                    claveNueva: {required: true, minlength: 8 },
+                    claveNueva2: {required: true, equalTo: "#claveNueva"}
+                },
+                errorPlacement: function(error, element) {
+                    error.insertAfter(element.next("span"));
+                }
+            });
+
+        $('#card-content-cambiar-clave')
+            .find('.btnContinuar').click(function() {
+                var btn = $(this);
+
+                if (!$(this).hasClass("w3-disabled")) {
+
+                    if ($('#formCambiarClave').valid()) {
+                        deshabilitarBotones();
+                        btn.html('Espere...');
+
+                        $.ajax({
+                            type: "POST",
+                            url: $('#formCambiarClave').attr("action"),
+                            data: $('#formCambiarClave').serialize(),
+                            dataType: "json",
+                            cache: false,
+                            success: function (data) {
+                                console.log(data);
+                                switch (data.estado) {
+                                    case 0:
+                                        $('#mensajePasswordOk')
+                                            .html('Su contrase&ntilde;a ha sido actualizada! Intente ingresar a MIeL.')
+                                            .removeClass('w3-hide');
+                                        break;
+                                    case 1:
+                                    case 2:
+                                    case 3:
+                                        $('#mensajeErrorLogin')
+                                            .html('No se pudo cambiar la contrase&ntilde;a. Intente recuperarla nuevamente.')
+                                            .removeClass('w3-hide');
+                                        break;
+                                }
+                            },
+                            error: function (error) {
+                                console.log(error);
+                                $('#mensajeErrorLogin')
+                                    .html('Ocurri&oacute; un error al cambiar la contrase&ntilde;a.')
+                                    .removeClass('w3-hide');
+                            },
+                            complete: function () {
+                                habilitarBotones();
+                                $('#claveNueva, #claveNueva2, #codigoCambiarClave').val('');
+                                $('#card-content-cambiar-clave').hide();
+                                $('#card-content-login').fadeIn();
+                            }
+                        });
+                    }
+                }
+            });
+
+    });
+</script>
+            </div>
+        </div>
+    </div>
+
+    <ul class="hexagons">
+                <li style="
+            left: 94%;
+            opacity: 19%;
+            -webkit-animation-delay: 25s;
+            animation-delay: 21s;
+            -webkit-animation-duration: 62s;
+            animation-duration: 38s;
+            ">
+            <div class="hex" style="transform: scale(164%)"></div>
+        </li>
+                <li style="
+            left: 82%;
+            opacity: 18%;
+            -webkit-animation-delay: 17s;
+            animation-delay: 30s;
+            -webkit-animation-duration: 29s;
+            animation-duration: 27s;
+            ">
+            <div class="hex" style="transform: scale(59%)"></div>
+        </li>
+                <li style="
+            left: 11%;
+            opacity: 23%;
+            -webkit-animation-delay: 26s;
+            animation-delay: 23s;
+            -webkit-animation-duration: 30s;
+            animation-duration: 57s;
+            ">
+            <div class="hex" style="transform: scale(58%)"></div>
+        </li>
+                <li style="
+            left: 46%;
+            opacity: 13%;
+            -webkit-animation-delay: 14s;
+            animation-delay: 4s;
+            -webkit-animation-duration: 35s;
+            animation-duration: 40s;
+            ">
+            <div class="hex" style="transform: scale(71%)"></div>
+        </li>
+                <li style="
+            left: 99%;
+            opacity: 13%;
+            -webkit-animation-delay: 5s;
+            animation-delay: 10s;
+            -webkit-animation-duration: 37s;
+            animation-duration: 63s;
+            ">
+            <div class="hex" style="transform: scale(50%)"></div>
+        </li>
+                <li style="
+            left: 0%;
+            opacity: 15%;
+            -webkit-animation-delay: 18s;
+            animation-delay: 14s;
+            -webkit-animation-duration: 49s;
+            animation-duration: 65s;
+            ">
+            <div class="hex" style="transform: scale(119%)"></div>
+        </li>
+                <li style="
+            left: 4%;
+            opacity: 11%;
+            -webkit-animation-delay: 18s;
+            animation-delay: 17s;
+            -webkit-animation-duration: 55s;
+            animation-duration: 60s;
+            ">
+            <div class="hex" style="transform: scale(70%)"></div>
+        </li>
+                <li style="
+            left: 38%;
+            opacity: 22%;
+            -webkit-animation-delay: 2s;
+            animation-delay: 17s;
+            -webkit-animation-duration: 48s;
+            animation-duration: 54s;
+            ">
+            <div class="hex" style="transform: scale(165%)"></div>
+        </li>
+                <li style="
+            left: 73%;
+            opacity: 21%;
+            -webkit-animation-delay: 4s;
+            animation-delay: 22s;
+            -webkit-animation-duration: 51s;
+            animation-duration: 57s;
+            ">
+            <div class="hex" style="transform: scale(46%)"></div>
+        </li>
+                <li style="
+            left: 9%;
+            opacity: 14%;
+            -webkit-animation-delay: 13s;
+            animation-delay: 0s;
+            -webkit-animation-duration: 67s;
+            animation-duration: 64s;
+            ">
+            <div class="hex" style="transform: scale(85%)"></div>
+        </li>
+                <li style="
+            left: 52%;
+            opacity: 11%;
+            -webkit-animation-delay: 21s;
+            animation-delay: 2s;
+            -webkit-animation-duration: 31s;
+            animation-duration: 27s;
+            ">
+            <div class="hex" style="transform: scale(88%)"></div>
+        </li>
+                <li style="
+            left: 67%;
+            opacity: 21%;
+            -webkit-animation-delay: 2s;
+            animation-delay: 26s;
+            -webkit-animation-duration: 31s;
+            animation-duration: 70s;
+            ">
+            <div class="hex" style="transform: scale(121%)"></div>
+        </li>
+                <li style="
+            left: 87%;
+            opacity: 18%;
+            -webkit-animation-delay: 2s;
+            animation-delay: 16s;
+            -webkit-animation-duration: 69s;
+            animation-duration: 49s;
+            ">
+            <div class="hex" style="transform: scale(64%)"></div>
+        </li>
+                <li style="
+            left: 7%;
+            opacity: 21%;
+            -webkit-animation-delay: 18s;
+            animation-delay: 0s;
+            -webkit-animation-duration: 41s;
+            animation-duration: 38s;
+            ">
+            <div class="hex" style="transform: scale(135%)"></div>
+        </li>
+                <li style="
+            left: 91%;
+            opacity: 10%;
+            -webkit-animation-delay: 30s;
+            animation-delay: 27s;
+            -webkit-animation-duration: 58s;
+            animation-duration: 38s;
+            ">
+            <div class="hex" style="transform: scale(178%)"></div>
+        </li>
+                <li style="
+            left: 74%;
+            opacity: 15%;
+            -webkit-animation-delay: 2s;
+            animation-delay: 12s;
+            -webkit-animation-duration: 39s;
+            animation-duration: 46s;
+            ">
+            <div class="hex" style="transform: scale(75%)"></div>
+        </li>
+                <li style="
+            left: 76%;
+            opacity: 21%;
+            -webkit-animation-delay: 0s;
+            animation-delay: 18s;
+            -webkit-animation-duration: 54s;
+            animation-duration: 29s;
+            ">
+            <div class="hex" style="transform: scale(90%)"></div>
+        </li>
+                <li style="
+            left: 95%;
+            opacity: 10%;
+            -webkit-animation-delay: 10s;
+            animation-delay: 18s;
+            -webkit-animation-duration: 64s;
+            animation-duration: 33s;
+            ">
+            <div class="hex" style="transform: scale(54%)"></div>
+        </li>
+                <li style="
+            left: 66%;
+            opacity: 15%;
+            -webkit-animation-delay: 26s;
+            animation-delay: 17s;
+            -webkit-animation-duration: 46s;
+            animation-duration: 68s;
+            ">
+            <div class="hex" style="transform: scale(183%)"></div>
+        </li>
+                <li style="
+            left: 30%;
+            opacity: 21%;
+            -webkit-animation-delay: 11s;
+            animation-delay: 28s;
+            -webkit-animation-duration: 25s;
+            animation-duration: 26s;
+            ">
+            <div class="hex" style="transform: scale(194%)"></div>
+        </li>
+            </ul>
+</section>
+
+<div id="login-margin"></div>
+
+<section id="cards">
+
+    <div class="home-container enlaces w3-margin-bottom">
+        <a href="https://www.unlam.edu.ar/calendario-academico/" target="_blank" class="flex-card w3-card w3-hover-shadow w3-round-large w3-white">
+            <div class="card-image-wrapper">
+                <div class="card-image" style="background-image: url('https://miel.unlam.edu.ar/vista/imagenes/home/card-universidad.jpg');"></div>
+            </div>
+            <div class="card-content">
+                <h4>Calendario académico</h4>
+                <p>Las fechas importantes para tu cursada: inscripciones, inicio y finalización de clases, exámenes finales, reincorporaciones.</p>
+            </div>
+        </a>
+        <a href="#popupSied" class="flex-card w3-card w3-hover-shadow w3-round-large w3-white popup">
+            <div class="card-image-wrapper">
+                <div class="card-image card-sied">
+                    <div style="background-image: url('https://miel.unlam.edu.ar/vista/imagenes/logos/sied-unlam-2025/logo-sied-unlam-blanco.png');"></div>
+                </div>
+            </div>
+            <div class="card-content">
+                <h4>SIED UNLaM</h4>
+                <p>Normativa y alcance de nuestro Sistema Institucional de Educación a Distancia.</p>
+            </div>
+        </a>
+        <a href="https://biblioteca.unlam.edu.ar/" target="_blank" class="flex-card w3-card w3-hover-shadow w3-round-large w3-white">
+            <div class="card-image-wrapper">
+                <div class="card-image" style="background-image: url('https://miel.unlam.edu.ar/vista/imagenes/home/card-biblioteca.jpg');"></div>
+            </div>
+            <div class="card-content">
+                <h4>Biblioteca Leopoldo Marechal</h4>
+                <p>Accedé al catálogo bibliográfico y conocé los servicios e instalaciones de la biblioteca.</p>
+            </div>
+        </a>
+    </div>
+
+    <div class="home-container noticias">
+                    <div class="flex-card w3-card w3-hover-shadow w3-round-large w3-white">
+                <div class="card-content w3-padding-bottom">
+                    <h4>Capacitación de género y disidencias</h4>
+                    <div class="card-content-media">
+                        <img src="https://miel.unlam.edu.ar/vista/imagenes/home/placa_micaela.png" width="100%" alt="">
+                    </div>
+                </div>
+            </div>
+            <div class="flex-card w3-card w3-hover-shadow w3-round-large w3-white">
+                <div class="card-content">
+                    <h4>Bienvenidos a MIeL</h4>
+                    <div class="card-content-media">
+                        <div class="video-wrapper">
+                            <iframe title="video" src="https://www.youtube.com/embed/wgIQbj8RDWo?si=td_hk6UpeBxwhoc4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+</section>
+
+
+<section id="faqs">
+    <div class="home-container">
+        <div>
+            <h2 class="subtitle w3-margin-bottom">Preguntas frecuentes</h2>
+
+            <details class="w3-white w3-container w3-margin-bottom w3-round-large w3-hover-shadow cursor-pointer">
+                <summary class="w3-padding-12">¿Qué es la Educación a Distancia?</summary>
+                <div class="w3-margin-bottom">
+                    <p>La <strong>Educación a Distancia (EaD)</strong> es una modalidad pedagógica y didáctica en la cual la relación docente-estudiante se encuentra <strong>separada en el tiempo y/o en el espacio</strong>, durante todo o gran parte del ciclo lectivo. La misma se hace efectiva mediante el uso de recursos tecnológicos, informáticos y de comunicación diseñados especialmente con la finalidad que los estudiantes alcancen los objetivos de la propuesta educativa.</p>
+                </div>
+            </details>
+
+            <details class="w3-white w3-container w3-margin-bottom w3-round-large w3-hover-shadow cursor-pointer">
+                <summary class="w3-padding-12">¿Qué es la Unidad de Educación a Distancia?</summary>
+                <div class="w3-margin-bottom">
+                    <p>La <strong>Unidad de Educación a Distancia (UEaD)</strong> es una área multidisciplinaria dependiente de la Secretaría Académica de la UNLaM. Su responsabilidad es desarrollar y gestionar las herramientas tecnológicas que componen la plataforma institucional de EaD; proveer asesoramiento, capacitación tutorial y orientación relacionada con el diseño de currículas y contenidos dentro de la modalidad; además de difundir las actividades vinculadas a la EaD.</p>
+                </div>
+            </details>
+
+            <details class="w3-white w3-container w3-margin-bottom w3-round-large w3-hover-shadow cursor-pointer">
+                <summary class="w3-padding-12">¿Qué es MIeL?</summary>
+                <div class="w3-margin-bottom">
+                    <p><strong>MIeL (Materias Interactivas en Línea)</strong> es una plataforma web de enseñanza y aprendizaje en línea, desarrollada íntegramente por personal docente la UNLaM. La misma fue puesta en funcionamiento durante el ciclo lectivo 2001, como resultado de un proyecto de investigación.</p>
+                    <p>A través de ella se imparten asignaturas de grado, posgrado, seminarios, cursos abiertos a la comunidad y de perfeccionamiento docente, en modalidad distancia o como complemento a la modalidad presencial.</p>
+                </div>
+            </details>
+
+            <details class="w3-white w3-container w3-margin-bottom w3-round-large w3-hover-shadow cursor-pointer">
+                <summary class="w3-padding-12">¿Qué herramientas encuentro en MIeL?</summary>
+                <div class="w3-margin-bottom">
+                    <p>La plataforma MIeL cuenta con herramientas de interacción sincrónica y asincrónica, las que en su conjunto funcionan como soporte de los procesos de enseñanza y aprendizaje. De acuerdo a las necesidades de cada asignatura, curso o seminario, puede especialmente configurarse un conjunto de herramientas, entre las cuales se encuentran <strong>Contenidos, Glosario, Prácticas, Tutoría, Mensajería, Foros, Chat, Evaluación, Encuestas,</strong> entre otras.</p>
+                </div>
+             </details>
+
+            <details class="w3-white w3-container w3-margin-bottom w3-round-large w3-hover-shadow cursor-pointer">
+                <summary class="w3-padding-12">¿Cómo accedo a MIeL?</summary>
+                <div class="w3-margin-bottom">
+                                            <p>Los <strong>alumnos/as regulares de la Universidad</strong> que se encuentren en estado activo, pueden acceder a la plataforma MIeL utilizando el mismo usuario y contraseña con los que acceden a Intraconsulta.</p>
+                        <p>El <strong>personal docente y no docente de la Universidad</strong> y los <strong>alumnos/as no regulares o de cursos de extensión</strong> puede acceder utilizando el usuario y contraseña que les sea asignado al momento de ser incorporados a sus correspondientes asignaturas.</p>
+                                    </div>
+            </details>
+
+            <details class="w3-white w3-container w3-margin-bottom w3-round-large w3-hover-shadow cursor-pointer">
+                <summary class="w3-padding-12">¿Puedo utilizar MIeL desde un celular?</summary>
+                <div class="w3-margin-bottom">
+                    <p>La plataforma MIeL fue desarrollada considerando la <strong>diversidad de dispositivos y tecnologías</strong> actualmente vigentes, es por ello que, respondiendo a su diseño adaptativo, además de ser utilizada desde computadoras de escritorio o notebooks, también puede ser utilizada desde teléfonos celulares o tablets.</p>
+                </div>
+            </details>
+
+            <details class="w3-white w3-container w3-margin-bottom w3-round-large w3-hover-shadow cursor-pointer">
+                <summary class="w3-padding-12">¿La plataforma MIeL es accesible?</summary>
+                <div class="w3-margin-bottom">
+                    <p>En MIeL incorporamos pautas de <strong>accesibilidad web</strong> para que personas con discapacidad visual puedan hacer uso completo de la plataforma mediante lectores de pantalla. Trabajamos en conjunto con docentes y estudiantes especializados en el tema con la finalidad de mejorar día a día la experiencia.</p>
+                    <p>Además de ello, para utilizar  MIeL no se requieren conocimientos avanzados de informática ni ostentar un lenguaje técnico específico. La misma fue proyectada para que la utilice cualquier integrante de la comunidad educativa de la Universidad.</p>
+                </div>
+            </details>
+
+            <details class="w3-white w3-container w3-margin-bottom w3-round-large w3-hover-shadow cursor-pointer">
+                <summary class="w3-padding-12">¿Cómo puedo contactarlos?</summary>
+                <div class="w3-margin-bottom">
+                    <p>Por asuntos de carácter administrativo relacionados a la plataforma MIeL, problemas técnicos o sugerencias, puede dirigirse de forma presencial a la <strong>Oficina UEaD</strong> (al lado del lab 241) o escribirnos por <strong>correo electrónico</strong> a <a href="mailto:miel@unlam.edu.ar" class="link">miel@unlam.edu.ar</a>. Recibimos decenas de correos por día y es prioritario responderlos lo antes posible.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+</section>
+
+<footer class="w3-padding-32">
+    <div class="w3-row home-container">
+
+        <div class="w3-col l5 w3-container">
+            <h4>UNLaM</h4>
+            <p>
+                <i class="material-icons w3-margin-right" aria-hidden="true">place</i>
+                Florencio Varela 1903 (B1754JEC)
+            </p>
+            <p>
+                <i class="material-icons w3-margin-right" aria-hidden="true">place</i>
+                San Justo, Buenos Aires, Argentina
+            </p>
+            <p>
+                <i class="material-icons w3-margin-right" aria-hidden="true">phone</i>
+                <a href="tel:+5411 4480-8900">(+54 11) 4480-8900</a>
+            </p>
+            <p>
+                <i class="material-icons w3-margin-right" aria-hidden="true">language</i>
+                <a target="_blank" href="https://www.unlam.edu.ar">www.unlam.edu.ar</a>
+            </p>
+            <p class="redes">
+                <a target="_blank" href="https://www.facebook.com/UnlamOficial">
+                    <img src="https://miel.unlam.edu.ar/vista/imagenes/home/icono-facebook-32.png" alt="facebook unlam"></a>
+                <a target="_blank" href="https://twitter.com/UnlamOficial">
+                    <img src="https://miel.unlam.edu.ar/vista/imagenes/home/icono-twitter-32.png" alt="twitter unlam"></a>
+                <a target="_blank" href="https://www.instagram.com/unlamoficial">
+                    <img src="https://miel.unlam.edu.ar/vista/imagenes/home/icono-instagram-32.png" alt="instagram unlam"></a>
+            </p>
+        </div>
+
+        <div class="w3-col l4 m6 w3-container">
+            <h4>ENLACES INSTITUCIONALES</h4>
+            <p><a target="_blank" href="https://humanidades.unlam.edu.ar">Dpto. Humanidades y Ciencias Sociales</a></p>
+            <p><a target="_blank" href="https://derecho.unlam.edu.ar">Dpto. Derecho y Ciencia Política</a></p>
+            <p><a target="_blank" href="https://ingenieria.unlam.edu.ar">Dpto. Ingeniería e Investigaciones Tecnológicas</a></p>
+            <p><a target="_blank" href="https://economicas.unlam.edu.ar">Dpto. Ciencias Económicas</a></p>
+            <p><a target="_blank" href="https://salud.unlam.edu.ar">Dpto. Ciencias de la Salud</a></p>
+        </div>
+
+        <div class="w3-col l3 m6 w3-container">
+            <h5 class="w3-hide-small">&nbsp;</h5>
+            <p><a target="_blank" href="https://extension.unlam.edu.ar/">Secretaría de Extensión Universitaria</a></p>
+            <p><a target="_blank" href="https://posgrado.unlam.edu.ar">Escuela de Posgrado</a></p>
+            <p><a target="_blank" href="https://formacioncontinua.unlam.edu.ar">Escuela de Formación Continua</a></p>
+            <p><a target="_blank" href="https://artesymedios.unlam.edu.ar/">Escuela de Artes y Medios</a></p>
+            <p><a target="_blank" href="https://biblioteca.unlam.edu.ar">Biblioteca Leopoldo Marechal</a></p>
+        </div>
+    </div>
+
+    <div class="w3-container w3-center w3-margin-top">
+        <div>© 2025 UNLaM. Todos los derechos reservados.</div>
+        <div>MIeL Materias Interactivas en Línea ® es una marca registrada de UNLaM - Versión 2025.2.0</div>
+        <div class="w3-padding-4"><a href="https://miel.unlam.edu.ar/principal/legal/"><strong>Aviso legal sobre el uso de MIeL</strong></a></div>
+    </div>
+</footer>
+<div id="popupSied" title="SIED UNLaM" class="w3-modal-content w3-card-4 w3-round-large w3-clear mfp-hide">
+    <header class="w3-container w3-light-grey">
+        <img src="https://miel.unlam.edu.ar/vista/imagenes/logos/sied-unlam-2025/logo-sied-unlam-40.png" class="w3-padding-8" alt="logo sied unlam">
+    </header>
+    <div class="w3-container w3-section">
+        <div class="w3-margin-bottom">
+            El Sistema Institucional de Educación a Distancia (SIED) es el conjunto de acciones, normas, procesos,
+            equipamiento, recursos humanos y didácticos que permiten el desarrollo de propuestas a distancia.
+        </div>
+        <ul class="lista-sied">
+            <li>
+                <a href="https://www.argentina.gob.ar/normativa/nacional/resoluci%C3%B3n-2599-2023-393379/texto" target="_blank">
+                    <div><span class="material-icons w3-text-gray" aria-hidden="true">link</span></div>
+                    <div>Resolución Ministerio de Educación 2599/2023: Reglamento sobre la modalidad de educación a distancia</div>
+                </a>
+            </li>
+            <li>
+                <a href="https://miel.unlam.edu.ar/data2/novedades/Res HCS 293-2011 - UEaD.pdf" target="_blank">
+                    <div><span class="material-icons w3-text-gray" aria-hidden="true">description</span></div>
+                    <div>Resolución UNLaM 293-2011: Creación de la Unidad de Educación a Distancia</div>
+                </a>
+            </li>
+            <li>
+                <a href="https://miel.unlam.edu.ar/data2/novedades/Res HCS 139-2019 - SIED.pdf" target="_blank">
+                    <div><span class="material-icons w3-text-gray" aria-hidden="true">description</span></div>
+                    <div>Resolución UNLaM 139-2019: Reglamento del SIED UNLaM</div>
+                </a>
+            </li>
+            <li>
+                <a href="https://miel.unlam.edu.ar/data2/novedades/Res HCS 563-2023 - UEaD.pdf" target="_blank">
+                    <div><span class="material-icons w3-text-gray" aria-hidden="true">description</span></div>
+                    <div>Resolución UNLaM 563-2023: Actualización de la Res. 293-2011</div>
+                </a>
+            </li>
+            <li>
+                <a href="https://miel.unlam.edu.ar/data2/novedades/Res CONEAU 304-2021 - Validacion SIED UNLaM.pdf" target="_blank">
+                    <div><span class="material-icons w3-text-gray" aria-hidden="true">description</span></div>
+                    <div>Resolución CONEAU 304-2021: Validación del SIED UNLaM</div>
+                </a>
+            </li>
+            <li>
+                <a href="https://miel.unlam.edu.ar/data2/novedades/Res CONEAU 304-2021 - Anexo.pdf" target="_blank">
+                    <div><span class="material-icons w3-text-gray" aria-hidden="true">description</span></div>
+                    <div>Resolución CONEAU 304-2021: Validación del SIED UNLaM: Anexo</div>
+                </a>
+            </li>
+            <li>
+                <a href="https://miel.unlam.edu.ar/data2/novedades/Res ME 157-2021 - Aprobacion SIED UNLaM.pdf" target="_blank">
+                    <div><span class="material-icons w3-text-gray" aria-hidden="true">description</span></div>
+                    <div>Resolución Ministerio de Educación 157-2021: Aprobación del SIED UNLaM</div>
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<script type="text/javascript" defer="">
+    // Inicializo tooltip de ayuda
+    tippy('.tippy');
+
+    // Inicializo el modal de sied
+    $('.popup').magnificPopup();
+
+    // Desactiva todos los botones del login (mientras carga)
+    function deshabilitarBotones() {
+        $('.login-container').find('button').addClass('w3-disabled');
+    }
+
+    // Activa todos los botones del login (cuando termina la carga)
+    function habilitarBotones() {
+        $('.login-container').find('button').removeClass('w3-disabled');
+    }
+
+    // Si el sitio en instalable, guardo el evento prompt y muestro el boton de instalacion
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (event) => {
+      //event.preventDefault();
+      deferredPrompt = event;
+      $("#btnInstalar").show();
+    });
+
+    // Agrega evento click al boton para iniciar la instalacion
+    $("#btnInstalar").on('click', () => {
+      if (!deferredPrompt) {
+        return;
+      }
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice
+        .then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            $("#btnInstalar").hide();
+          }
+        });
+    });
+</script>
+
+
+
+
+</body>
